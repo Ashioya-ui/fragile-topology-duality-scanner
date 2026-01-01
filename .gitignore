@@ -1,0 +1,16 @@
+Python artifacts
+
+pycache/
+*.pyc *.pyo *.pyd
+
+Local environments
+
+.venv/ env/ venv/
+
+IDE settings
+
+.vscode/ .idea/
+
+OS generated files
+
+.DS_Store Thumbs.db
