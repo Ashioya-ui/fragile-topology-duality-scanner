@@ -10,18 +10,15 @@ from numba import jit, prange
 @jit(nopython=True, parallel=True, fastmath=True)
 def transform_basis_fast(psi_real, basis_array, U_sp, sig_indices):
     """
-    Compiles the loop to Machine Code. 
+    Compiles the transformation loop to Machine Code. 
     Runs in parallel on all CPU cores.
     """
     dim = len(basis_array)
     psi_mom = np.zeros(dim, dtype=np.complex128)
     n_sig = len(sig_indices)
     
-    # Pre-allocate small matrix for determinant calculation to avoid memory churn
-    # Note: In parallel loops, we can't share temp buffers easily without thread-local storage.
-    # Numba handles allocation reasonably well for small fixed sizes.
-    
-    for i_k in prange(dim): # Parallel loop over Momentum States
+    # Parallel loop over Momentum States
+    for i_k in prange(dim): 
         state_k = basis_array[i_k]
         val = 0.0 + 0j
         
@@ -31,8 +28,7 @@ def transform_basis_fast(psi_real, basis_array, U_sp, sig_indices):
             state_r = basis_array[i_r]
             coeff = psi_real[i_r]
             
-            # Construct 6x6 matrix manually (Numba doesn't like np.ix_)
-            # We assume N=6 particles for 3x2 lattice
+            # Construct 6x6 matrix manually (assuming N=6 for 3x2)
             mat = np.zeros((6, 6), dtype=np.complex128)
             for r in range(6):
                 row_idx = state_k[r]
@@ -61,13 +57,14 @@ class DualityEngine:
         print(f"--- SYSTEM SETUP ---")
         print(f"Lattice: {Lx}x{Ly} ({self.n_sites} sites)")
         print(f"Particles: {self.n_particles}")
+        print(f"Interaction V: {self.V}")
         
         # Basis construction
         self.basis_real_list = list(itertools.combinations(range(self.n_sites), self.n_particles))
         self.dim = len(self.basis_real_list)
         self.map_real = {state: i for i, state in enumerate(self.basis_real_list)}
         
-        # Convert Basis to Numpy Array for Numba (Crucial Step)
+        # Convert Basis to Numpy Array for Numba
         self.basis_array = np.array(self.basis_real_list, dtype=np.int32)
         
         print(f"Hilbert Space Dimension: {self.dim}")
@@ -160,13 +157,12 @@ class DualityEngine:
                     phase = np.exp(-1j*(kx*rx + ky*ry))
                     U_sp[k, r] = phase / np.sqrt(self.Lx*self.Ly)
 
-        print("  > Starting JIT-Compiled Basis Transform (This is fast)...")
+        print("  > Starting JIT-Compiled Basis Transform (Fast Mode)...")
         start_t = time.time()
         
         # Identify significant components
         sig_indices = np.where(np.abs(psi_real) > 1e-6)[0]
-        # Ensure correct types for Numba
-        sig_indices = sig_indices.astype(np.int32)
+        sig_indices = sig_indices.astype(np.int32) # Ensure correct type for Numba
         
         # CALL NUMBA FUNCTION
         psi_mom = transform_basis_fast(psi_real, self.basis_array, U_sp, sig_indices)
@@ -186,7 +182,6 @@ class DualityEngine:
         target_NA = self.n_particles // 2
         blocks = {}
         
-        # We iterate over indices to avoid object creation overhead
         for idx in range(len(psi)):
             coeff = psi[idx]
             if abs(coeff) < 1e-10: continue
@@ -201,7 +196,6 @@ class DualityEngine:
         
         if not blocks: return np.array([])
         
-        # Convert to matrix
         uA = list(blocks.keys()); uB = set()
         for k in uA: uB.update(blocks[k].keys())
         uB = list(uB)
@@ -221,7 +215,7 @@ class DualityEngine:
         except: return np.array([])
 
 if __name__ == "__main__":
-    # Settings
+    # Settings: Robust 3x2, Fragile Phase
     engine = DualityEngine(Lx=3, Ly=2, t1=0.2, t2=1.0, phi=0.0, V=2.0)
     
     gs = engine.get_ground_state()
