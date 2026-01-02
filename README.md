@@ -4,56 +4,40 @@ Numerical verification of Momentum-Space Anyon localization in Crystalline Chern
 
 Overview
 
-This repository contains the simulation engine designed to test the Position-Momentum Duality hypothesis proposed by Sati and Schreiber (2025).
+This repository contains the simulation engines designed to test the Position-Momentum Duality hypothesis proposed by Sati and Schreiber (2025).
 
-The central question: Do "fragile" topological phases host anyonic excitations localized in momentum space?
+We perform two distinct tests to classify the "Fragile" Phase:
 
-To answer this, this engine simulates interacting spinless fermions on a Breathing Kagome Lattice and computes the Entanglement Spectrum (ES) in two dual partitions:
+Duality Test (duality_engine.py): Checks for "Momentum Space Anyons" using the Momentum-Space Entanglement Spectrum (MSES).
 
-Real-Space Cut: Detects standard topological order (Chern Insulators).
+Obstruction Test (polarization_test.py): Checks for "Obstructed Atomic Limits" using the Many-Body Resta Polarization.
 
-Momentum-Space Cut: Detects the proposed dual topological order (Fragile/Crystalline phases).
+The Test Cases
 
-The Test
+1. Entanglement Spectrum (Liquid Order)
 
-We simulate the interacting Hamiltonian:
+Run: python duality_engine.py
 
+Goal: Detect topological edge modes in the momentum-space partition.
 
-$$H = \sum_{ij} t_{ij} c^\dagger_i c_j + V \sum_{\langle ij \rangle} n_i n_j$$
+Result: Determines if the phase is a "Dual FCI."
 
-Null Hypothesis: The interaction $V$ drives the fragile phase into a trivial Charge Density Wave (CDW), resulting in a featureless spectrum in both cuts.
+2. Resta Polarization (Crystal Order)
 
-Duality Hypothesis (Sati/Schreiber): The interaction stabilizes a state where the Li-Haldane counting statistics emerge in the Momentum-Space Entanglement Spectrum, verifying the physical existence of momentum-space anyons.
+Run: python polarization_test.py
+
+Goal: Calculate the center-of-mass shift of the interacting ground state.
+
+Result: Determines if the phase is an "Obstructed Atomic Limit" (electrons locked in empty voids).
+
+$P \approx 0$: Trivial Insulator.
+
+$P \neq 0$: Fragile Topological Crystal.
 
 Installation
 
 pip install -r requirements.txt
 
-
-Usage
-
-Run the main duality engine:
-
-python duality_engine.py
-
-
-Configuration
-
-You can adjust the physics parameters in duality_engine.py to test different regimes:
-
-Lx, Ly: Lattice dimensions (Default: 3x2 for rigorous bulk/edge separation).
-
-V: Interaction strength (Default: 2.0).
-
-t1, t2: Hopping parameters (t1 < t2 selects the Obstructed/Fragile phase).
-
-Interpretation of Results
-
-The script generates a dashboard with two plots:
-
-Left (Real Space): Should be gapped (no low-lying levels) for the fragile phase.
-
-Right (Momentum Space): Look for low-lying entanglement levels counting 1, 1, 2, 3... This signature confirms the duality.
 
 References
 
